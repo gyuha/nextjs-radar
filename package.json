@@ -1,0 +1,280 @@
+{
+  "name": "nextjs-radar",
+  "displayName": "Next.js Radar",
+  "description": "Next.js Radar is a powerful Visual Studio Code extension designed to streamline your Next.js App Router development experience. It provides a visual overview of your project's routing structure, helping you navigate complex route hierarchies with ease.",
+  "author": "Your Name",
+  "repository": "https://github.com/your-username/nextjs-radar",
+  "publisher": "your-publisher",
+  "license": "MIT",
+  "homepage": "https://github.com/your-username/nextjs-radar#readme",
+  "icon": "media/nextjs_radar_icon.png",
+  "keywords": [
+    "nextjs",
+    "app-router",
+    "routes",
+    "routing",
+    "navigation",
+    "file-tree",
+    "route-visualization",
+    "developer-tools",
+    "vscode-extension",
+    "preview",
+    "web-development",
+    "file-explorer",
+    "path-navigation",
+    "layout",
+    "dynamic-routes",
+    "parallel-routes"
+  ],
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization",
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:next.config.js",
+    "workspaceContains:package.json",
+    "workspaceContains:src/app",
+    "workspaceContains:app"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "nextjsRadar.openRoute",
+        "title": "Open Route",
+        "category": "Next.js Radar"
+      },
+      {
+        "command": "nextjsRadar.refreshRoutes",
+        "title": "Refresh Routes",
+        "category": "Next.js Radar",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "nextjsRadar.openInBrowser",
+        "title": "Open in Browser",
+        "category": "Next.js Radar",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "nextjsRadar.openFile",
+        "title": "Open File",
+        "category": "Next.js Radar"
+      },
+      {
+        "command": "nextjsRadar.toggleViewType",
+        "title": "Toggle View Type",
+        "category": "Next.js Radar",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "nextjsRadar.search",
+        "when": "view == routesView && !nextjsRadar:hasSearchTerm",
+        "title": "Search Routes",
+        "category": "Next.js Radar",
+        "icon": "$(search)"
+      },
+      {
+        "command": "nextjsRadar.clearSearch",
+        "when": "view == routesView && nextjsRadar:hasSearchTerm",
+        "title": "Clear Search",
+        "category": "Next.js Radar",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "nextjsRadar.toggleSorting",
+        "title": "Toggle Sorting Type",
+        "category": "Next.js Radar",
+        "icon": "$(sort-precedence)"
+      },
+      {
+        "command": "nextjsRadar.refreshPageContent",
+        "title": "Refresh Page Content",
+        "category": "Next.js Radar",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "nextjsRadar.scrollToLine",
+        "title": "Scroll to Line",
+        "category": "Next.js Radar"
+      },
+      {
+        "command": "nextjsRadar.openComponentFile",
+        "title": "Open Component File",
+        "category": "Next.js Radar",
+        "icon": "$(go-to-file)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "nextjs-radar",
+          "title": "Next.js Radar",
+          "icon": "media/nextjs_radar_icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "nextjs-radar": [
+        {
+          "id": "routesView",
+          "name": "Next.js Routes",
+          "icon": "$(file-code)",
+          "contextualTitle": "Next.js Routes"
+        },
+        {
+          "id": "pageContentView",
+          "name": "Page Content",
+          "icon": "$(symbol-structure)",
+          "contextualTitle": "Page Content",
+          "when": "resourceExtname == .tsx || resourceExtname == .jsx || resourceExtname == .ts || resourceExtname == .js"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "nextjsRadar.search",
+          "when": "view == routesView && !nextjsRadar:hasSearchTerm",
+          "group": "navigation@1"
+        },
+        {
+          "command": "nextjsRadar.clearSearch",
+          "when": "view == routesView && nextjsRadar:hasSearchTerm",
+          "group": "navigation@1"
+        },
+        {
+          "command": "nextjsRadar.refreshRoutes",
+          "when": "view == routesView",
+          "group": "navigation"
+        },
+        {
+          "command": "nextjsRadar.toggleViewType",
+          "when": "view == routesView",
+          "group": "navigation"
+        },
+        {
+          "command": "nextjsRadar.toggleSorting",
+          "when": "view == routesView",
+          "group": "navigation"
+        },
+        {
+          "command": "nextjsRadar.refreshPageContent",
+          "when": "view == pageContentView",
+          "group": "navigation",
+          "icon": "$(refresh)"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "nextjsRadar.openInBrowser",
+          "when": "view == routesView && !(viewItem == divider || viewItem == spacer)",
+          "group": "inline"
+        },
+        {
+          "command": "nextjsRadar.openFile",
+          "when": "view == routesView && !(viewItem == divider || viewItem == spacer)",
+          "group": "inline"
+        },
+        {
+          "command": "nextjsRadar.scrollToLine",
+          "when": "view == pageContentView && viewItem == componentWithFile",
+          "title": "Go to Usage",
+          "group": "inline@1"
+        },
+        {
+          "command": "nextjsRadar.openComponentFile",
+          "when": "view == pageContentView && viewItem == componentWithFile",
+          "title": "Open Component File",
+          "group": "inline@2"
+        },
+        {
+          "command": "nextjsRadar.openComponentFile",
+          "when": "view == pageContentView && viewItem == componentMultiWithFile",
+          "title": "Open Component File",
+          "group": "inline"
+        },
+        {
+          "command": "nextjsRadar.openComponentFile",
+          "when": "view == pageContentView && viewItem == componentInstanceWithFile",
+          "title": "Open Component File",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Next.js Radar",
+      "properties": {
+        "nextjsRadar.viewType": {
+          "type": "string",
+          "enum": [
+            "flat",
+            "hierarchical"
+          ],
+          "default": "hierarchical",
+          "description": "Display routes in flat or hierarchical view"
+        },
+        "nextjsRadar.sortingType": {
+          "type": "string",
+          "enum": [
+            "natural",
+            "basic"
+          ],
+          "default": "natural",
+          "description": "Route sorting type (natural: natural number sorting, basic: basic string comparison)"
+        },
+        "nextjsRadar.showFileExtensions": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show file extensions in route tree"
+        },
+        "nextjsRadar.groupByType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Group routes by file type"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint && npm run create-test-fixtures",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "node ./out/test/runTest.js",
+    "create-test-fixtures": "node ./out/test/fixtures/create-test-fixtures.js"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.16.0",
+    "fs-extra": "^11.2.0",
+    "mocha": "^11.0.1",
+    "npm-run-all": "^4.1.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "glob": "^11.0.0",
+    "path": "^0.12.7"
+  }
+}

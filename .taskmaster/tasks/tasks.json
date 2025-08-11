@@ -1,0 +1,199 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "프로젝트 초기 구조 설정",
+        "description": "Next.js Radar VS Code 확장 프로젝트의 기본 구조와 package.json 설정",
+        "details": "Svelte Radar의 package.json을 기반으로 Next.js Radar용으로 수정. 프로젝트명을 nextjs-radar로 변경, displayName과 description 업데이트, activationEvents를 Next.js 프로젝트 감지용으로 수정 (next.config.js, package.json의 next dependency, src/app 또는 app 디렉토리 존재). 키워드를 nextjs, app-router, routes로 변경. esbuild, TypeScript 설정 유지.",
+        "testStrategy": "package.json 파일 구문 검증, VS Code 확장 로드 테스트, activationEvents 조건 검증",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "package.json 기본 정보 및 메타데이터 수정",
+            "description": "프로젝트명, displayName, description 등 기본 식별 정보를 Next.js Radar용으로 변경",
+            "dependencies": [],
+            "details": "package.json에서 name을 'nextjs-radar'로, displayName을 'Next.js Radar'로, description을 Next.js App Router 라우팅 구조 시각화 도구로 수정. keywords를 ['nextjs', 'app-router', 'routes', 'routing', 'navigation', 'file-tree', 'route-visualization', 'developer-tools', 'vscode-extension']로 변경. author, repository, homepage URL을 적절히 수정하고 icon을 Next.js용으로 교체.",
+            "status": "done",
+            "testStrategy": "package.json 파일 구문 유효성 검사, VS Code 확장 메니페스트 검증"
+          },
+          {
+            "id": 2,
+            "title": "activationEvents Next.js 프로젝트 감지 설정",
+            "description": "VS Code 확장이 Next.js 프로젝트에서만 활성화되도록 조건 수정",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "package.json의 activationEvents를 ['workspaceContains:next.config.js', 'workspaceContains:package.json', 'workspaceContains:src/app', 'workspaceContains:app']로 수정하여 Next.js 프로젝트 감지. workspaceContains:package.json 조건에 next dependency 검사 로직 추가를 위한 기반 설정.",
+            "status": "done",
+            "testStrategy": "다양한 Next.js 프로젝트 구조에서 확장 활성화 테스트, 비-Next.js 프로젝트에서 비활성화 확인"
+          },
+          {
+            "id": 3,
+            "title": "TypeScript 및 esbuild 설정 최적화",
+            "description": "기존 TypeScript 컴파일러 설정과 esbuild 번들링 설정을 Next.js용으로 조정",
+            "dependencies": [
+              "1.1",
+              "1.2"
+            ],
+            "details": "tsconfig.json에서 Next.js 타입 지원을 위한 lib 배열 조정 및 moduleResolution 설정 확인. esbuild.js에서 Next.js 관련 외부 라이브러리 처리 및 번들링 최적화. target을 ES2022로 유지하되 Next.js App Router 파일 구조 분석에 필요한 의존성 처리 추가.",
+            "status": "done",
+            "testStrategy": "TypeScript 컴파일 오류 없이 빌드 성공, esbuild 번들링 결과물 크기 및 성능 검증"
+          },
+          {
+            "id": 4,
+            "title": "npm scripts 및 개발 환경 설정 조정",
+            "description": "빌드, 테스트, 린팅 스크립트를 Next.js 프로젝트 분석용으로 수정",
+            "dependencies": [
+              "1.3"
+            ],
+            "details": "package.json의 scripts 섹션에서 기존 Svelte 관련 스크립트를 Next.js용으로 수정. 'create-test-fixtures' 스크립트를 Next.js App Router 구조 테스트 픽스처 생성용으로 변경. devDependencies에서 불필요한 Svelte 관련 패키지 제거 및 Next.js 타입 분석에 필요한 패키지 추가 준비.",
+            "status": "done",
+            "testStrategy": "모든 npm 스크립트 실행 성공, 개발 환경에서 watch 모드 정상 동작 확인"
+          },
+          {
+            "id": 5,
+            "title": "VS Code 확장 로드 및 기본 구조 검증",
+            "description": "수정된 package.json으로 VS Code 확장이 정상 로드되는지 전체적으로 검증",
+            "dependencies": [
+              "1.1",
+              "1.2",
+              "1.3",
+              "1.4"
+            ],
+            "details": "VS Code Extension Development Host에서 수정된 확장 로드 테스트. Next.js 프로젝트에서 activationEvents 조건 만족 시 확장 활성화 확인. 기본 명령어들이 등록되고 UI 요소들이 정상 표시되는지 검증. 오류 로그 확인 및 기본 구조 정상성 점검.",
+            "status": "done",
+            "testStrategy": "Extension Development Host에서 Next.js 프로젝트 열기, 확장 활성화 상태 확인, 기본 UI 요소 표시 검증, 콘솔 오류 없음 확인"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Next.js App Router 상수 및 타입 정의",
+        "description": "Next.js App Router의 파일 패턴과 라우팅 규칙을 위한 타입 시스템 구축",
+        "details": "src/constants/ 디렉토리에 Next.js App Router 전용 타입 정의. RouteFileType enum (page, layout, loading, error, not-found, route, template, default, global-error), RoutingPattern enum (static, dynamic, catch-all, optional-catch-all, parallel, intercepting, route-group), NextjsRouteItem interface 정의. 파일 패턴 매칭을 위한 정규식 상수들 정의.",
+        "testStrategy": "타입 정의 컴파일 검증, 파일 패턴 정규식 테스트, enum 값 검증",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Next.js 라우트 아이템 모델 구현",
+        "description": "Next.js App Router 구조를 표현하는 RouteItem 모델 클래스",
+        "details": "src/models/routeItem.ts에 NextjsRouteItem 클래스 구현. 프로퍼티: id, title, description, filePath, routePath, routeType (page/layout/loading 등), routingPattern (static/dynamic 등), icon, children 배열, isCollapsible. 메서드: getDisplayName(), getTooltip(), getIcon(), isValidNextjsRoute(). 동적 세그먼트, 병렬 라우트, 인터셉팅 라우트 처리 로직 포함.",
+        "testStrategy": "RouteItem 객체 생성 테스트, 다양한 라우트 패턴별 파싱 테스트, 아이콘 할당 검증",
+        "priority": "high",
+        "dependencies": [
+          2
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Next.js 파일 감지 및 라우팅 유틸리티",
+        "description": "Next.js App Router 디렉토리 구조 분석 및 라우트 파일 감지 유틸리티",
+        "details": "src/utils/routeUtils.ts에 Next.js 전용 유틸리티 함수들 구현. findNextjsAppDir(), scanAppRouterFiles(), parseRouteSegments(), identifyRoutePattern(), buildRouteHierarchy(), matchUrlToRoute() 함수. glob 패턴을 사용하여 app/ 디렉토리에서 page.tsx, layout.tsx 등 파일 스캔. 동적 라우트 [id], [...slug], [[...slug]] 처리. 라우트 그룹 (marketing), 병렬 라우트 @auth, 인터셉팅 라우트 (..) 패턴 지원.",
+        "testStrategy": "다양한 Next.js 프로젝트 구조에 대한 파일 스캔 테스트, 라우트 패턴 매칭 테스트, URL-파일 매핑 검증",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "라우트 계층 구조 제공자 구현",
+        "description": "VS Code TreeDataProvider를 구현한 Next.js 라우트 계층 구조 표시 클래스",
+        "details": "src/providers/routesProvider.ts에 NextjsRoutesProvider 클래스 구현. VS Code TreeDataProvider<NextjsRouteItem> 인터페이스 구현. getTreeItem(), getChildren() 메서드. 계층적/플랫 뷰 전환 기능, 검색/필터링 기능, 정렬 기능 (natural/basic). workspace 설정 파일 (.vscode/nextjs-radar.json) 읽기 기능. 파일 감시자 등록으로 라우트 변경사항 자동 감지 및 트리 갱신.",
+        "testStrategy": "TreeDataProvider 인터페이스 구현 검증, 뷰 타입 전환 테스트, 검색 기능 테스트, 파일 변경 감지 테스트",
+        "priority": "high",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "페이지 콘텐츠 분석 및 네비게이터",
+        "description": "Next.js 페이지 파일 내부 구조 분석 및 네비게이션 지원",
+        "details": "src/providers/pageContentProvider.ts에 NextjsPageContentProvider 구현. React/Next.js 컴포넌트 구조 파싱, JSX 엘리먼트 감지, 함수 컴포넌트/클래스 컴포넌트 구분. 섹션 마커 // @nr Section Name 지원. import 구문 분석으로 컴포넌트 파일 경로 추적. src/models/pageContentItem.ts에 ContentItem 모델 정의 (Section, Component, Function, Export 타입).",
+        "testStrategy": "React 컴포넌트 파싱 테스트, 섹션 마커 인식 테스트, import 경로 해석 테스트, 컴포넌트 정의 위치 추적 검증",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "VS Code 확장 진입점 및 명령어 등록",
+        "description": "확장의 activate 함수와 모든 사용자 명령어 구현",
+        "details": "src/extension.ts에 activate() 함수 구현. NextjsRoutesProvider, NextjsPageContentProvider 인스턴스 생성 및 TreeView 등록. 명령어 등록: nextjsRadar.openRoute (URL 입력으로 라우트 열기), nextjsRadar.refreshRoutes, nextjsRadar.toggleViewType, nextjsRadar.search, nextjsRadar.openInBrowser (localhost:3000으로 미리보기), nextjsRadar.openFile. 워크스페이스 폴더 검증 및 Next.js 프로젝트 감지 로직.",
+        "testStrategy": "확장 활성화 테스트, 명령어 등록 검증, TreeView 생성 확인, Next.js 프로젝트 감지 테스트",
+        "priority": "high",
+        "dependencies": [
+          5,
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "VS Code 기여 설정 및 UI 구성",
+        "description": "package.json의 contributes 섹션 설정과 사용자 인터페이스 구성",
+        "details": "package.json contributes 섹션에 Next.js Radar 전용 설정. commands 배열에 모든 명령어 정의, viewsContainers에 'nextjs-radar' 액티비티 바 컨테이너, views에 'routesView'와 'pageContentView' 정의. menus 섹션에 컨텍스트 메뉴와 타이틀 바 버튼 설정. configuration 섹션에 viewType, sortingType, showFileExtensions, groupByType 설정 옵션들 정의.",
+        "testStrategy": "VS Code 확장 메니페스트 검증, UI 요소 표시 확인, 설정 옵션 동작 테스트, 컨텍스트 메뉴 기능 검증",
+        "priority": "high",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "URL 매칭 및 브라우저 미리보기 기능",
+        "description": "실제 URL을 Next.js 라우트 파일로 매핑하고 브라우저에서 미리보기하는 기능",
+        "details": "src/utils/urlUtils.ts 파일 생성. parseUrl(), matchUrlToAppRoute(), generatePreviewUrl() 함수 구현. 동적 세그먼트 매칭 로직 (예: /users/123 → /users/[id]/page.tsx), 캐치올 라우트 처리, 병렬 라우트 URL 매핑. 라우트 그룹 제거 로직. localhost 개발 서버 URL 생성 기능. 브라우저에서 바로 열기 기능과 미리보기 명령어 구현.",
+        "testStrategy": "URL 파싱 테스트, 동적 라우트 매칭 검증, 브라우저 미리보기 URL 생성 테스트, 다양한 라우트 패턴별 URL 매핑 검증",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "테스트 스위트 및 빌드 설정 완성",
+        "description": "단위 테스트, 통합 테스트 구현 및 esbuild 기반 빌드 설정",
+        "details": "src/test/ 디렉토리에 Next.js 전용 테스트 파일들 구현. extension.test.ts에서 확장 활성화, 명령어 실행, 라우트 감지 테스트. fixtures/ 디렉토리에 다양한 Next.js 프로젝트 구조 샘플 생성. routeUtils.test.ts, urlUtils.test.ts에서 핵심 유틸리티 함수 테스트. esbuild.js 설정에서 Next.js 프로젝트 감지를 위한 번들링 최적화. tsconfig.json, eslint 설정 조정.",
+        "testStrategy": "모든 단위 테스트 실행 및 통과, 통합 테스트로 실제 Next.js 프로젝트에서 확장 동작 검증, 빌드 결과물 크기 및 성능 최적화 확인",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-11T12:51:22.918Z",
+      "updated": "2025-08-11T13:08:11.819Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
