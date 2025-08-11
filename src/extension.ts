@@ -38,6 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			showCollapseAll: true
 		});
 
+
 		// Register commands
 		registerCommands(context, routesProvider, pageContentProvider);
 
@@ -110,11 +111,12 @@ function registerCommands(
 
 	// Search routes command
 	const searchRoutesCommand = vscode.commands.registerCommand('nextjsRadar.searchRoutes', async () => {
+		const current = '';
 		const query = await vscode.window.showInputBox({
 			prompt: 'Search routes',
-			placeHolder: 'Enter search terms...'
+			placeHolder: '경로 / 파일명 / 타입 검색',
+			value: current
 		});
-
 		if (query !== undefined) {
 			routesProvider.applySearch(query);
 		}

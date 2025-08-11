@@ -67,16 +67,16 @@
         "category": "Next.js Radar"
       },
       {
-        "command": "nextjsRadar.toggleViewType",
-        "title": "Toggle View Type",
-        "category": "Next.js Radar",
-        "icon": "$(list-tree)"
-      },
-      {
         "command": "nextjsRadar.searchRoutes",
         "title": "Search Routes",
         "category": "Next.js Radar",
         "icon": "$(search)"
+      },
+      {
+        "command": "nextjsRadar.toggleViewType",
+        "title": "Toggle View Type",
+        "category": "Next.js Radar",
+        "icon": "$(list-tree)"
       },
       {
         "command": "nextjsRadar.clearSearch",
@@ -147,16 +147,6 @@
     "menus": {
       "view/title": [
         {
-          "command": "nextjsRadar.searchRoutes",
-          "when": "view == nextjsRadar.routes && !nextjsRadar:hasSearchTerm",
-          "group": "navigation@1"
-        },
-        {
-          "command": "nextjsRadar.clearSearch",
-          "when": "view == nextjsRadar.routes && nextjsRadar:hasSearchTerm",
-          "group": "navigation@1"
-        },
-        {
           "command": "nextjsRadar.refreshRoutes",
           "when": "view == nextjsRadar.routes",
           "group": "navigation"
@@ -221,6 +211,11 @@
           "type": "boolean",
           "default": true,
           "description": "Group routes by file type"
+        },
+        "nextjsRadar.categorizeRoot": {
+          "type": "boolean",
+            "default": true,
+            "description": "Show categorized groups (PAGES, LAYOUTS, API ROUTES, etc.) at root"
         }
       }
     }

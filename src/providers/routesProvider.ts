@@ -25,11 +25,12 @@ export interface NextjsRadarConfig extends NextJsRouteConfig {
   sortingType?: SortingType;
   showFileExtensions?: boolean;
   groupByType?: boolean;
+  categorizeRoot?: boolean; // NEW: group routes into categories at root
 }
 
-export class NextjsRoutesProvider implements vscode.TreeDataProvider<RouteItem> {
-  private _onDidChangeTreeData: vscode.EventEmitter<RouteItem | undefined | null | void> = new vscode.EventEmitter<RouteItem | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<RouteItem | undefined | null | void> = this._onDidChangeTreeData.event;
+export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+  private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   private routes: RouteItem[] = [];
   private allFiles: AppRouterFile[] = [];
@@ -39,6 +40,9 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<RouteItem> 
   private fileWatcher: vscode.FileSystemWatcher | null = null;
   private searchQuery: string = '';
   private filteredRoutes: RouteItem[] = [];
+  private showSearchItem: boolean = true;
+  private searchPlaceholder = '검색어 입력...';
+  private categoryContext = 'nextjs-radar-category';
 
   constructor(private context: vscode.ExtensionContext) {
     this.initialize();
@@ -57,7 +61,8 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<RouteItem> 
       viewType: 'hierarchical',
       sortingType: 'natural',
       showFileExtensions: false,
-      groupByType: true
+      groupByType: true,
+      categorizeRoot: true
     };
   }
 
@@ -155,28 +160,14 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<RouteItem> 
     try {
       // Scan for route files
       this.allFiles = await scanAppRouterFiles(this.appDirectory);
-      
       // Build hierarchy
       const allRoutes = buildRouteHierarchy(this.allFiles);
-      
       // Apply view type
-      if (this.config.viewType === 'flat') {
-        this.routes = this.flattenRoutes(allRoutes);
-      } else {
-        this.routes = allRoutes;
-      }
-
+      this.routes = this.config.viewType === 'flat' ? this.flattenRoutes(allRoutes) : allRoutes;
       // Apply sorting
       this.routes = this.applySorting(this.routes);
-
       // Apply search filter if active
-      if (this.searchQuery) {
-        this.applySearch(this.searchQuery);
-      } else {
-        this.filteredRoutes = this.routes;
-      }
-
-      // Notify tree view of changes
+      this.filteredRoutes = this.searchQuery ? this.filterRoutes(this.routes, this.searchQuery.toLowerCase()) : this.routes;
       this._onDidChangeTreeData.fire();
     } catch (error) {
       console.error('Failed to refresh routes:', error);
@@ -187,21 +178,62 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<RouteItem> 
   /**
    * TreeDataProvider implementation: getTreeItem
    */
-  getTreeItem(element: RouteItem): vscode.TreeItem {
-    return element;
-  }
+  getTreeItem(element: vscode.TreeItem): vscode.TreeItem { return element; }
 
   /**
    * TreeDataProvider implementation: getChildren
    */
-  getChildren(element?: RouteItem): Thenable<RouteItem[]> {
+  getChildren(element?: vscode.TreeItem): Thenable<vscode.TreeItem[]> {
     if (!element) {
-      // Return root items
-      return Promise.resolve(this.filteredRoutes);
+      return Promise.resolve(this.getRootItems());
     }
+    if ((element as any).categoryChildren) {
+      return Promise.resolve((element as any).categoryChildren);
+    }
+    const route = element as RouteItem;
+    return Promise.resolve(route.children || []);
+  }
 
-    // Return children of the element
-    return Promise.resolve(element.children || []);
+  /** Build root items with optional search & categories */
+  private getRootItems(): vscode.TreeItem[] {
+    const searchItem = this.buildSearchItem();
+    if (!this.config.categorizeRoot) {
+      return [searchItem, ...this.filteredRoutes];
+    }
+    const categories: Record<string, RouteItem[]> = {};
+    const add = (group: string, item: RouteItem) => { (categories[group] ||= []).push(item); };
+    for (const r of this.filteredRoutes) {
+      switch (r.fileType) {
+        case RouteFileType.Page: add('PAGES', r); break;
+        case RouteFileType.Layout: add('LAYOUTS', r); break;
+        case RouteFileType.Route: add('API ROUTES', r); break;
+        case RouteFileType.Error:
+        case RouteFileType.GlobalError:
+        case RouteFileType.NotFound: add('ERRORS', r); break;
+        case RouteFileType.Loading: add('LOADING', r); break;
+        case RouteFileType.Template: add('TEMPLATES', r); break;
+        default: add('OTHERS', r); break;
+      }
+    }
+    const categoryItems = Object.keys(categories).sort().map(name => {
+      const item = new vscode.TreeItem(name, vscode.TreeItemCollapsibleState.Collapsed);
+      (item as any).categoryChildren = categories[name];
+      item.iconPath = new vscode.ThemeIcon('symbol-folder');
+      item.contextValue = this.categoryContext;
+      item.tooltip = `${name} • ${categories[name].length}`;
+      return item;
+    });
+    return [searchItem, ...categoryItems];
+  }
+
+  private buildSearchItem(): vscode.TreeItem {
+    const label = this.searchQuery ? `Search: ${this.searchQuery}` : `Search: (${this.searchPlaceholder})`;
+    const searchItem = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
+    searchItem.iconPath = new vscode.ThemeIcon('search');
+    searchItem.contextValue = 'spacer';
+    searchItem.command = { command: 'nextjsRadar.searchRoutes', title: 'Search Routes' };
+    searchItem.tooltip = 'Enter 로 수정 / ESC 지우기';
+    return searchItem;
   }
 
   /**
@@ -296,6 +328,7 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<RouteItem> 
     
     this._onDidChangeTreeData.fire();
   }
+
 
   /**
    * Filter routes based on search query
