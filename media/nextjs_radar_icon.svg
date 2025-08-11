@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <linearGradient id="nextjsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#333333;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="70%" style="stop-color:#0070f3;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#0070f3;stop-opacity:0.4" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="12" cy="12" r="11" fill="url(#radarGradient)" stroke="#0070f3" stroke-width="1" opacity="0.8"/>
+  
+  <!-- Radar grid lines -->
+  <circle cx="12" cy="12" r="8" fill="none" stroke="#0070f3" stroke-width="0.3" opacity="0.5"/>
+  <circle cx="12" cy="12" r="5" fill="none" stroke="#0070f3" stroke-width="0.3" opacity="0.6"/>
+  <circle cx="12" cy="12" r="2" fill="none" stroke="#0070f3" stroke-width="0.2" opacity="0.7"/>
+  
+  <!-- Cross-hair lines -->
+  <line x1="12" y1="1" x2="12" y2="23" stroke="#0070f3" stroke-width="0.2" opacity="0.3"/>
+  <line x1="1" y1="12" x2="23" y2="12" stroke="#0070f3" stroke-width="0.2" opacity="0.3"/>
+  
+  <!-- Central Next.js logo (scaled and centered) -->
+  <g transform="translate(12, 12) scale(0.6, 0.6) translate(-12, -12)">
+    <!-- Official Next.js logo path -->
+    <path d="M18.665 21.978C16.758 23.255 14.465 24 12 24 5.377 24 0 18.623 0 12S5.377 0 12 0s12 5.377 12 12c0 3.583-1.574 6.801-4.067 9.001L9.219 7.2H7.2v9.596h1.615V9.251l9.85 12.727Zm-3.332-8.533 1.6 2.061V7.2h-1.6v6.245Z" 
+          fill="url(#nextjsGradient)"/>
+  </g>
+  
+  <!-- Route detection blips -->
+  <circle cx="18" cy="8" r="1" fill="#10b981" opacity="0.9">
+    <animate attributeName="opacity" values="0.3;0.9;0.3" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="6" cy="16" r="1" fill="#f59e0b" opacity="0.9">
+    <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="18" cy="16" r="1" fill="#ef4444" opacity="0.9">
+    <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Radar sweep line -->
+  <line x1="12" y1="12" x2="20" y2="4" stroke="#0070f3" stroke-width="1.5" opacity="0.8">
+    <animateTransform attributeName="transform" attributeType="XML" type="rotate" 
+                      from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite"/>
+  </line>
+</svg>
