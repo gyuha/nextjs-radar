@@ -44,6 +44,6 @@
   <!-- Radar sweep line -->
   <line x1="12" y1="12" x2="20" y2="4" stroke="#0070f3" stroke-width="1.5" opacity="0.8">
     <animateTransform attributeName="transform" attributeType="XML" type="rotate" 
-                      from="0 12 12" to="360 12 12" dur="4s" repeatCount="indefinite"/>
+                      from="0 12 12" to="360 12 12" dur="3600s" repeatCount="indefinite"/>
   </line>
 </svg>

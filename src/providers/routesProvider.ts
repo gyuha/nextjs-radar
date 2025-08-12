@@ -43,7 +43,6 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
   private searchQuery: string = '';
   private filteredRoutes: RouteItem[] = [];
   private categoryContext = 'nextjs-radar-category';
-  private searchPlaceholder = '🔍 검색어 입력...';
 
   constructor(private context: vscode.ExtensionContext) {
     this.initialize();
@@ -195,12 +194,10 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
     return Promise.resolve(route.children || []);
   }
 
-  /** Build root items with search box and optional categories */
+  /** Build root items with optional categories */
   private getRootItems(): vscode.TreeItem[] {
-    const searchItem = this.buildSearchItem();
-    
     if (!this.config.categorizeRoot) {
-      return [searchItem, ...this.filteredRoutes];
+      return this.filteredRoutes;
     }
     
     const categories: Record<string, RouteItem[]> = {};
@@ -226,43 +223,7 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
       item.tooltip = `${name} • ${categories[name].length}`;
       return item;
     });
-    return [searchItem, ...categoryItems];
-  }
-
-  /** Build search input-like TreeItem */
-  private buildSearchItem(): vscode.TreeItem {
-    let displayText: string;
-    
-    if (this.searchQuery) {
-      displayText = `"${this.searchQuery}"`;
-    } else {
-      displayText = 'Search Input';
-    }
-    
-    const searchItem = new vscode.TreeItem(displayText, vscode.TreeItemCollapsibleState.None);
-    
-    // Use different icons based on search state
-    if (this.searchQuery) {
-      searchItem.iconPath = new vscode.ThemeIcon('search-fuzzy', new vscode.ThemeColor('charts.blue'));
-      searchItem.description = `${this.filteredRoutes.length} results • ✕ clear`;
-    } else {
-      searchItem.iconPath = new vscode.ThemeIcon('search', new vscode.ThemeColor('icon.foreground'));
-      searchItem.description = '🔍 경로, 파일명, 타입 검색...';
-    }
-    
-    searchItem.contextValue = 'searchInput';
-    searchItem.command = { 
-      command: 'nextjsRadar.searchRoutes', 
-      title: 'Search Routes',
-      arguments: [this.searchQuery]
-    };
-    
-    // Enhanced tooltip
-    searchItem.tooltip = this.searchQuery 
-      ? `현재 검색: "${this.searchQuery}"\n• 클릭하여 검색어 수정\n• 우클릭 > Clear Search로 검색 초기화\n• ${this.filteredRoutes.length}개 결과 발견`
-      : '라우트 검색하기\n• 클릭하여 검색 시작\n• 경로, 파일명, 파일타입으로 검색 가능\n• 퍼지 검색 지원 (부분 일치)';
-    
-    return searchItem;
+    return categoryItems;
   }
 
 

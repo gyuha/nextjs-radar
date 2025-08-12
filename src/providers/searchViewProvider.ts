@@ -36,7 +36,7 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
 <head>
 <meta charset="UTF-8" />
 <style>
-body { padding: 6px; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
+body { padding: 4px 6px 2px 6px; margin: 0; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
 input { width: 100%; padding:4px 6px; box-sizing: border-box; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border:1px solid var(--vscode-input-border, var(--vscode-editorWidget-border)); border-radius:4px; }
 input:focus { outline:1px solid var(--vscode-focusBorder); }
 .clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color: var(--vscode-icon-foreground); }
