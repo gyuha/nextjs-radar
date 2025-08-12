@@ -189,8 +189,8 @@
         },
         "nextjsRadar.categorizeRoot": {
           "type": "boolean",
-            "default": true,
-            "description": "Show categorized groups (PAGES, LAYOUTS, API ROUTES, etc.) at root"
+          "default": true,
+          "description": "Show categorized groups (PAGES, LAYOUTS, API ROUTES, etc.) at root"
         }
       }
     }

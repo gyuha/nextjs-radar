@@ -14,9 +14,7 @@ import {
   sortRoutes,
   getWorkspaceRoot,
   isNextjsProject,
-  AppRouterFile,
-  fuzzySearch,
-  FuzzyMatch
+  AppRouterFile
 } from '../utils';
 
 export type ViewType = 'hierarchical' | 'flat';
@@ -322,116 +320,58 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
 
 
   /**
-   * Filter routes based on search query using fuzzy search
+   * Filter routes based on search query
    */
   private filterRoutes(routes: RouteItem[], query: string): RouteItem[] {
     if (!query.trim()) {
       return routes;
     }
 
-    // Flatten all routes for fuzzy search
-    const allRoutes = this.flattenAllRoutes(routes);
+    const filtered: RouteItem[] = [];
     
-    // Perform fuzzy search
-    const fuzzyMatches = fuzzySearch(
-      query,
-      allRoutes,
-      (route: RouteItem) => [
-        route.label as string,
-        route.path,
-        route.filePath,
-        route.fileType
-      ],
-      5 // Minimum score threshold
-    );
-
-    // Convert fuzzy matches back to route items
-    const matchedRoutes = fuzzyMatches.map(match => match.item);
-    
-    // Rebuild hierarchy including parent routes of matched items
-    return this.rebuildHierarchyWithMatches(routes, matchedRoutes);
-  }
-
-  /**
-   * Flatten all routes recursively
-   */
-  private flattenAllRoutes(routes: RouteItem[]): RouteItem[] {
-    const flattened: RouteItem[] = [];
-    
-    const flatten = (items: RouteItem[]) => {
-      for (const item of items) {
-        flattened.push(item);
-        if (item.children) {
-          flatten(item.children);
+    for (const route of routes) {
+      let includeRoute = false;
+      let filteredChildren: RouteItem[] = [];
+      
+      // Check if route matches search
+      const matchesSearch = 
+        (route.label as string).toLowerCase().includes(query) ||
+        route.path.toLowerCase().includes(query) ||
+        route.filePath.toLowerCase().includes(query) ||
+        route.fileType.toLowerCase().includes(query);
+      
+      if (matchesSearch) {
+        includeRoute = true;
+      }
+      
+      // Recursively filter children
+      if (route.children) {
+        filteredChildren = this.filterRoutes(route.children, query);
+        if (filteredChildren.length > 0) {
+          includeRoute = true;
         }
       }
-    };
-    
-    flatten(routes);
-    return flattened;
-  }
-
-  /**
-   * Rebuild hierarchy including parent routes of matched items
-   */
-  private rebuildHierarchyWithMatches(originalRoutes: RouteItem[], matchedRoutes: RouteItem[]): RouteItem[] {
-    if (matchedRoutes.length === 0) {
-      return [];
-    }
-
-    const matchedIds = new Set(matchedRoutes.map(r => r.id));
-    const includeIds = new Set<string>();
-    
-    // Add matched route IDs and their parents
-    for (const route of matchedRoutes) {
-      includeIds.add(route.id);
       
-      // Add parent chain
-      let currentRoute = route;
-      while (currentRoute.parentId) {
-        includeIds.add(currentRoute.parentId);
-        const parent = this.findRouteById(currentRoute.parentId, originalRoutes);
-        if (!parent) {
-          break;
-        }
-        currentRoute = parent;
+      if (includeRoute) {
+        const filteredRoute = new RouteItem(
+          route.id,
+          route.label as string,
+          route.path,
+          route.filePath,
+          route.fileType,
+          route.pattern,
+          route.segments,
+          route.parentId,
+          filteredChildren.length > 0 ? filteredChildren : undefined
+        );
+        
+        filtered.push(filteredRoute);
       }
     }
-
-    // Filter and rebuild the hierarchy
-    const filterHierarchy = (routes: RouteItem[]): RouteItem[] => {
-      const filtered: RouteItem[] = [];
-      
-      for (const route of routes) {
-        if (includeIds.has(route.id)) {
-          const filteredChildren = route.children ? filterHierarchy(route.children) : undefined;
-          
-          const filteredRoute = new RouteItem(
-            route.id,
-            route.label as string,
-            route.path,
-            route.filePath,
-            route.fileType,
-            route.pattern,
-            route.segments,
-            route.parentId,
-            filteredChildren && filteredChildren.length > 0 ? filteredChildren : undefined
-          );
-          
-          // Highlight matched routes
-          if (matchedIds.has(route.id)) {
-            filteredRoute.tooltip = `🔍 Search match: ${route.path}`;
-          }
-          
-          filtered.push(filteredRoute);
-        }
-      }
-      
-      return filtered;
-    };
-
-    return filterHierarchy(originalRoutes);
+    
+    return filtered;
   }
+
 
   /**
    * Change view type
