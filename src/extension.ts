@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { NextjsRoutesProvider, PageContentProvider, SearchViewProvider } from './providers';
+import { NextjsRoutesProvider, PageContentProvider, NextjsSearchViewProvider } from './providers';
 import { getWorkspaceRoot, isNextjsProject } from './utils';
 
 let routesProvider: NextjsRoutesProvider | undefined;
 let pageContentProvider: PageContentProvider | undefined;
-let searchProvider: SearchViewProvider | undefined;
+let searchViewProvider: NextjsSearchViewProvider | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
 	console.log('Next.js Radar extension is starting...');
@@ -27,7 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Initialize providers
 		routesProvider = new NextjsRoutesProvider(context);
 		pageContentProvider = new PageContentProvider(context);
-		searchProvider = new SearchViewProvider(context);
+		searchViewProvider = new NextjsSearchViewProvider(routesProvider, context);
 
 		// Register tree views
 		const routesTreeView = vscode.window.createTreeView('nextjsRadar.routes', {
@@ -40,15 +40,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			showCollapseAll: true
 		});
 
-		// Register search webview
-		context.subscriptions.push(
-			vscode.window.registerWebviewViewProvider(SearchViewProvider.viewType, searchProvider)
+		// Register webview views
+		const searchWebviewView = vscode.window.registerWebviewViewProvider(
+			NextjsSearchViewProvider.viewId,
+			searchViewProvider
 		);
-
-		// Connect search provider with routes provider
-		searchProvider.onSearchChange((query: string) => {
-			routesProvider?.applySearch(query);
-		});
 
 		// Register commands
 		registerCommands(context, routesProvider, pageContentProvider);
@@ -57,8 +53,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(
 			routesTreeView,
 			pageContentTreeView,
+			searchWebviewView,
 			routesProvider,
-			pageContentProvider
+			pageContentProvider,
+			searchViewProvider
 		);
 
 		console.log('Next.js Radar successfully activated!');
@@ -121,12 +119,11 @@ function registerCommands(
 	});
 
 	// Search routes command
-	const searchRoutesCommand = vscode.commands.registerCommand('nextjsRadar.searchRoutes', async () => {
-		const current = '';
+	const searchRoutesCommand = vscode.commands.registerCommand('nextjsRadar.searchRoutes', async (currentQuery?: string) => {
 		const query = await vscode.window.showInputBox({
 			prompt: 'Search routes',
 			placeHolder: '경로 / 파일명 / 타입 검색',
-			value: current
+			value: currentQuery || ''
 		});
 		if (query !== undefined) {
 			routesProvider.applySearch(query);
@@ -172,5 +169,5 @@ export function deactivate() {
 	// Cleanup is handled by VS Code disposing the context subscriptions
 	routesProvider = undefined;
 	pageContentProvider = undefined;
-	searchProvider = undefined;
+	searchViewProvider = undefined;
 }

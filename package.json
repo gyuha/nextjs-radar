@@ -130,11 +130,11 @@
     "views": {
       "nextjs-radar": [
         {
-          "id": "nextjsRadar.searchInput",
+          "id": "nextjsRadar.search",
           "name": "Search Routes",
-          "type": "webview",
           "icon": "$(search)",
-          "contextualTitle": "Search Routes"
+          "contextualTitle": "Search Routes",
+          "type": "webview"
         },
         {
           "id": "nextjsRadar.routes",
@@ -177,13 +177,18 @@
       ],
       "view/item/context": [
         {
+          "command": "nextjsRadar.clearSearch",
+          "when": "view == nextjsRadar.routes && viewItem == searchInput",
+          "group": "inline"
+        },
+        {
           "command": "nextjsRadar.openInBrowser",
-          "when": "view == nextjsRadar.routes && !(viewItem == divider || viewItem == spacer)",
+          "when": "view == nextjsRadar.routes && !(viewItem == divider || viewItem == spacer || viewItem == searchInput || viewItem == nextjs-radar-category)",
           "group": "inline"
         },
         {
           "command": "nextjsRadar.copyPath",
-          "when": "view == nextjsRadar.routes && !(viewItem == divider || viewItem == spacer)",
+          "when": "view == nextjsRadar.routes && !(viewItem == divider || viewItem == spacer || viewItem == searchInput || viewItem == nextjs-radar-category)",
           "group": "inline"
         }
       ]
