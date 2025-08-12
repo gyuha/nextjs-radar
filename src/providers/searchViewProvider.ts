@@ -36,16 +36,16 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
 <head>
 <meta charset="UTF-8" />
 <style>
-body { padding: 4px 6px 2px 6px; margin: 0; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
-input { width: 100%; padding:4px 6px; box-sizing: border-box; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border:1px solid var(--vscode-input-border, var(--vscode-editorWidget-border)); border-radius:4px; }
+body { padding: 2px 4px 0 4px; margin: 0; font-family: var(--vscode-font-family); color: var(--vscode-foreground); line-height: 1; }
+input { width: 100%; padding: 2px 4px; box-sizing: border-box; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border:1px solid var(--vscode-input-border, var(--vscode-editorWidget-border)); border-radius:2px; font-size: 12px; height: 20px; }
 input:focus { outline:1px solid var(--vscode-focusBorder); }
-.clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color: var(--vscode-icon-foreground); }
-.wrapper { position:relative; }
+.clear { position:absolute; right:6px; top:50%; transform:translateY(-50%); cursor:pointer; color: var(--vscode-icon-foreground); font-size: 11px; }
+.wrapper { position:relative; height: 20px; }
 </style>
 </head>
 <body>
   <div class="wrapper">
-    <input id="search" type="text" placeholder="경로/파일/타입 검색..." aria-label="Search Next.js routes" />
+    <input id="search" type="text" placeholder="Path/File/Type Search..." aria-label="Search Next.js routes" />
     <span class="clear" title="Clear" id="clear">✕</span>
   </div>
 <script nonce="${nonce}">
