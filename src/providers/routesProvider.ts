@@ -14,7 +14,9 @@ import {
   sortRoutes,
   getWorkspaceRoot,
   isNextjsProject,
-  AppRouterFile
+  AppRouterFile,
+  fuzzySearch,
+  FuzzyMatch
 } from '../utils';
 
 export type ViewType = 'hierarchical' | 'flat';
@@ -40,8 +42,6 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
   private fileWatcher: vscode.FileSystemWatcher | null = null;
   private searchQuery: string = '';
   private filteredRoutes: RouteItem[] = [];
-  private showSearchItem: boolean = true;
-  private searchPlaceholder = '검색어 입력...';
   private categoryContext = 'nextjs-radar-category';
 
   constructor(private context: vscode.ExtensionContext) {
@@ -194,11 +194,10 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
     return Promise.resolve(route.children || []);
   }
 
-  /** Build root items with optional search & categories */
+  /** Build root items with optional categories */
   private getRootItems(): vscode.TreeItem[] {
-    const searchItem = this.buildSearchItem();
     if (!this.config.categorizeRoot) {
-      return [searchItem, ...this.filteredRoutes];
+      return this.filteredRoutes;
     }
     const categories: Record<string, RouteItem[]> = {};
     const add = (group: string, item: RouteItem) => { (categories[group] ||= []).push(item); };
@@ -223,18 +222,9 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
       item.tooltip = `${name} • ${categories[name].length}`;
       return item;
     });
-    return [searchItem, ...categoryItems];
+    return categoryItems;
   }
 
-  private buildSearchItem(): vscode.TreeItem {
-    const label = this.searchQuery ? `Search: ${this.searchQuery}` : `Search: (${this.searchPlaceholder})`;
-    const searchItem = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
-    searchItem.iconPath = new vscode.ThemeIcon('search');
-    searchItem.contextValue = 'spacer';
-    searchItem.command = { command: 'nextjsRadar.searchRoutes', title: 'Search Routes' };
-    searchItem.tooltip = 'Enter 로 수정 / ESC 지우기';
-    return searchItem;
-  }
 
   /**
    * Get parent of an element (for reveal functionality)
@@ -331,52 +321,115 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
 
 
   /**
-   * Filter routes based on search query
+   * Filter routes based on search query using fuzzy search
    */
   private filterRoutes(routes: RouteItem[], query: string): RouteItem[] {
-    const filtered: RouteItem[] = [];
+    if (!query.trim()) {
+      return routes;
+    }
+
+    // Flatten all routes for fuzzy search
+    const allRoutes = this.flattenAllRoutes(routes);
     
-    for (const route of routes) {
-      let includeRoute = false;
-      let filteredChildren: RouteItem[] = [];
-      
-      // Check if route matches search
-      const matchesSearch = 
-        (route.label as string).toLowerCase().includes(query) ||
-        route.path.toLowerCase().includes(query) ||
-        route.filePath.toLowerCase().includes(query) ||
-        route.fileType.toLowerCase().includes(query);
-      
-      if (matchesSearch) {
-        includeRoute = true;
+    // Perform fuzzy search
+    const fuzzyMatches = fuzzySearch(
+      query,
+      allRoutes,
+      (route: RouteItem) => [
+        route.label as string,
+        route.path,
+        route.filePath,
+        route.fileType
+      ],
+      5 // Minimum score threshold
+    );
+
+    // Convert fuzzy matches back to route items
+    const matchedRoutes = fuzzyMatches.map(match => match.item);
+    
+    // Rebuild hierarchy including parent routes of matched items
+    return this.rebuildHierarchyWithMatches(routes, matchedRoutes);
+  }
+
+  /**
+   * Flatten all routes recursively
+   */
+  private flattenAllRoutes(routes: RouteItem[]): RouteItem[] {
+    const flattened: RouteItem[] = [];
+    
+    const flatten = (items: RouteItem[]) => {
+      for (const item of items) {
+        flattened.push(item);
+        if (item.children) {
+          flatten(item.children);
+        }
       }
+    };
+    
+    flatten(routes);
+    return flattened;
+  }
+
+  /**
+   * Rebuild hierarchy including parent routes of matched items
+   */
+  private rebuildHierarchyWithMatches(originalRoutes: RouteItem[], matchedRoutes: RouteItem[]): RouteItem[] {
+    if (matchedRoutes.length === 0) {
+      return [];
+    }
+
+    const matchedIds = new Set(matchedRoutes.map(r => r.id));
+    const includeIds = new Set<string>();
+    
+    // Add matched route IDs and their parents
+    for (const route of matchedRoutes) {
+      includeIds.add(route.id);
       
-      // Recursively filter children
-      if (route.children) {
-        filteredChildren = this.filterRoutes(route.children, query);
-        if (filteredChildren.length > 0) {
-          includeRoute = true;
+      // Add parent chain
+      let currentRoute = route;
+      while (currentRoute.parentId) {
+        includeIds.add(currentRoute.parentId);
+        const parent = this.findRouteById(currentRoute.parentId, originalRoutes);
+        if (!parent) {
+          break;
+        }
+        currentRoute = parent;
+      }
+    }
+
+    // Filter and rebuild the hierarchy
+    const filterHierarchy = (routes: RouteItem[]): RouteItem[] => {
+      const filtered: RouteItem[] = [];
+      
+      for (const route of routes) {
+        if (includeIds.has(route.id)) {
+          const filteredChildren = route.children ? filterHierarchy(route.children) : undefined;
+          
+          const filteredRoute = new RouteItem(
+            route.id,
+            route.label as string,
+            route.path,
+            route.filePath,
+            route.fileType,
+            route.pattern,
+            route.segments,
+            route.parentId,
+            filteredChildren && filteredChildren.length > 0 ? filteredChildren : undefined
+          );
+          
+          // Highlight matched routes
+          if (matchedIds.has(route.id)) {
+            filteredRoute.tooltip = `🔍 Search match: ${route.path}`;
+          }
+          
+          filtered.push(filteredRoute);
         }
       }
       
-      if (includeRoute) {
-        const filteredRoute = new RouteItem(
-          route.id,
-          route.label as string,
-          route.path,
-          route.filePath,
-          route.fileType,
-          route.pattern,
-          route.segments,
-          route.parentId,
-          filteredChildren.length > 0 ? filteredChildren : undefined
-        );
-        
-        filtered.push(filteredRoute);
-      }
-    }
-    
-    return filtered;
+      return filtered;
+    };
+
+    return filterHierarchy(originalRoutes);
   }
 
   /**

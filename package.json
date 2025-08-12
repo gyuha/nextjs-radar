@@ -130,6 +130,13 @@
     "views": {
       "nextjs-radar": [
         {
+          "id": "nextjsRadar.searchInput",
+          "name": "Search Routes",
+          "type": "webview",
+          "icon": "$(search)",
+          "contextualTitle": "Search Routes"
+        },
+        {
           "id": "nextjsRadar.routes",
           "name": "Next.js Routes",
           "icon": "$(file-code)",
