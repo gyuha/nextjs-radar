@@ -131,16 +131,10 @@
       "nextjs-radar": [
         {
           "id": "nextjsRadar.search",
-          "name": "Search Routes",
+          "name": "Routes",
           "icon": "$(search)",
-          "contextualTitle": "Search Routes",
+          "contextualTitle": "Routes",
           "type": "webview"
-        },
-        {
-          "id": "nextjsRadar.routes",
-          "name": "Next.js Routes",
-          "icon": "$(file-code)",
-          "contextualTitle": "Next.js Routes"
         },
         {
           "id": "nextjsRadar.pageContent",
@@ -154,44 +148,13 @@
     "menus": {
       "view/title": [
         {
-          "command": "nextjsRadar.refreshRoutes",
-          "when": "view == nextjsRadar.routes",
-          "group": "navigation"
-        },
-        {
-          "command": "nextjsRadar.toggleViewType",
-          "when": "view == nextjsRadar.routes",
-          "group": "navigation"
-        },
-        {
-          "command": "nextjsRadar.toggleSorting",
-          "when": "view == nextjsRadar.routes",
-          "group": "navigation"
-        },
-        {
           "command": "nextjsRadar.refreshPageContent",
           "when": "view == nextjsRadar.pageContent",
           "group": "navigation",
           "icon": "$(refresh)"
         }
       ],
-      "view/item/context": [
-        {
-          "command": "nextjsRadar.clearSearch",
-          "when": "view == nextjsRadar.routes && viewItem == searchInput",
-          "group": "inline"
-        },
-        {
-          "command": "nextjsRadar.openInBrowser",
-          "when": "view == nextjsRadar.routes && !(viewItem == divider || viewItem == spacer || viewItem == searchInput || viewItem == nextjs-radar-category)",
-          "group": "inline"
-        },
-        {
-          "command": "nextjsRadar.copyPath",
-          "when": "view == nextjsRadar.routes && !(viewItem == divider || viewItem == spacer || viewItem == searchInput || viewItem == nextjs-radar-category)",
-          "group": "inline"
-        }
-      ]
+      "view/item/context": []
     },
     "configuration": {
       "title": "Next.js Radar",
