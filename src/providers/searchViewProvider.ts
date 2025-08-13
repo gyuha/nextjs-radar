@@ -38,7 +38,8 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
       enableScripts: true
     };
 
-  // 초기에는 스캔 완료 전이므로 currentResults를 설정하지 않아 로딩 상태 표시
+    // 초기 HTML 설정
+    webviewView.webview.html = this.getHtml();
 
     webviewView.webview.onDidReceiveMessage(msg => {
       switch (msg.type) {
@@ -65,7 +66,6 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
   }
 
   private performSearch(query: string): void {
-    console.log('📢[searchViewProvider.ts:61]: query: ', query);
     const allRoutes = this.routesProvider.getAllRoutes();
     const flatRoutes = this.flattenRoutes(allRoutes);
     
@@ -169,7 +169,11 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
 
   private updateView(): void {
     if (this._view) {
-      this._view.webview.html = this.getHtml();
+      // 검색 결과만 업데이트하고 전체 HTML을 다시 생성하지 않음
+      this._view.webview.postMessage({
+        type: 'updateResults',
+        results: this.currentResults
+      });
     }
   }
 
@@ -387,7 +391,7 @@ body {
     </div>
   </div>
 
-  ${this.getResultsHtml()}
+  <div id="results-container">${this.getResultsHtml()}</div>
 
 <script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
@@ -402,6 +406,120 @@ searchInput.addEventListener('input', () => {
     vscode.postMessage({ type: 'search', value: searchInput.value });
   }, 300);
 });
+
+// 결과 업데이트 메시지 처리
+window.addEventListener('message', event => {
+  const message = event.data;
+  if (message.type === 'updateResults') {
+    updateResultsDisplay(message.results);
+  }
+});
+
+function updateResultsDisplay(results) {
+  const resultsContainer = document.getElementById('results-container');
+  if (!resultsContainer) return;
+  
+  resultsContainer.innerHTML = getResultsHtml(results);
+}
+
+function getResultsHtml(currentResults) {
+  if (!currentResults) {
+    return \`
+      <div class="empty-state">
+        Loading routes...<br>
+        <small>Please wait while routes are being loaded</small>
+      </div>
+    \`;
+  }
+
+  if (currentResults.totalResults === 0) {
+    if (currentResults.query) {
+      return \`
+        <div class="no-results">
+          No routes found for "\${currentResults.query}"
+        </div>
+      \`;
+    } else {
+      return \`
+        <div class="no-results">
+          No routes found in this project<br>
+          <small>Make sure this is a Next.js App Router project</small>
+        </div>
+      \`;
+    }
+  }
+
+  const categoriesHtml = Object.entries(currentResults.categories)
+    .map(([key, category]) => {
+      const expandIcon = category.expanded ? '▼' : '▶';
+      const routesHtml = category.expanded ? 
+        category.routes.map(route => \`
+          <div class="route-item">
+            <div class="route-content" data-filepath="\${route.filePath}">
+              <span class="route-icon">\${getFileIcon(route.fileType)}</span>
+              <span class="route-path">\${route.path}</span>
+              <span class="route-file">\${getFileName(route.filePath)}</span>
+            </div>
+            <div class="route-actions">
+              <button class="action-btn file-btn" data-action="open-file" data-filepath="\${route.filePath}" title="Open File">
+                📄
+              </button>
+              \${canOpenInBrowser(route.fileType) ? \`
+                <button class="action-btn browser-btn" data-action="open-browser" data-path="\${route.path}" title="Open in Browser">
+                  🌐
+                </button>
+              \` : ''}
+            </div>
+          </div>
+        \`).join('') : '';
+
+      return \`
+        <div class="category">
+          <div class="category-header" data-category="\${key}">
+            <span class="category-icon">\${expandIcon}</span>
+            <span class="category-name">\${category.name}</span>
+            <span class="category-count">\${category.count}</span>
+          </div>
+          \${category.expanded ? \`<div class="route-list">\${routesHtml}</div>\` : ''}
+        </div>
+      \`;
+    }).join('');
+
+  const summaryText = currentResults.query 
+    ? \`\${currentResults.totalResults} routes found\` 
+    : \`\${currentResults.totalResults} total routes\`;
+
+  return \`
+    <div class="results-summary">
+      \${summaryText}
+    </div>
+    <div class="results-list">
+      \${categoriesHtml}
+    </div>
+  \`;
+}
+
+function getFileIcon(fileType) {
+  switch (fileType) {
+    case 'page': return '📄';
+    case 'layout': return '🔧';
+    case 'route': return '🌐';
+    case 'loading': return '⏳';
+    case 'error':
+    case 'global-error':
+    case 'not-found': return '❌';
+    case 'template': return '📝';
+    default: return '📁';
+  }
+}
+
+function getFileName(filePath) {
+  return filePath.split('/').pop() || filePath;
+}
+
+function canOpenInBrowser(fileType) {
+  return fileType === 'page' || fileType === 'route';
+}
 
 clearBtn.addEventListener('click', () => {
   searchInput.value = '';
@@ -545,9 +663,6 @@ document.addEventListener('click', (e) => {
     return fileType === RouteFileType.Page || fileType === RouteFileType.Route;
   }
 
-  private postMessage(message: any) {
-    this._view?.webview.postMessage(message);
-  }
 
   dispose() {
     this.disposables.forEach(d => d.dispose());
