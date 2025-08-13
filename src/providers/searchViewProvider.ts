@@ -21,8 +21,16 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private disposables: vscode.Disposable[] = [];
   private currentResults: SearchResult | null = null;
+  private initialScanCompleted = false; // 스캔 완료 여부 플래그
 
-  constructor(private routesProvider: NextjsRoutesProvider, private context: vscode.ExtensionContext) {}
+  constructor(private routesProvider: NextjsRoutesProvider, private context: vscode.ExtensionContext) {
+    // 라우트 변경(초기 스캔 포함) 시 검색 갱신
+    this.routesProvider.onDidChangeTreeData(() => {
+      this.initialScanCompleted = true;
+      // 기존 쿼리를 유지하여 재검색 (없으면 전체 목록)
+      this.performSearch(this.currentResults?.query || '');
+    });
+  }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
     this._view = webviewView;
@@ -30,8 +38,7 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
       enableScripts: true
     };
 
-    // Load all routes initially
-    this.performSearch('');
+  // 초기에는 스캔 완료 전이므로 currentResults를 설정하지 않아 로딩 상태 표시
 
     webviewView.webview.onDidReceiveMessage(msg => {
       switch (msg.type) {
@@ -58,23 +65,23 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
   }
 
   private performSearch(query: string): void {
+    console.log('📢[searchViewProvider.ts:61]: query: ', query);
     const allRoutes = this.routesProvider.getAllRoutes();
     const flatRoutes = this.flattenRoutes(allRoutes);
     
     let matchedRoutes: RouteItem[];
     
-    if (!query.trim()) {
-      // Show all routes when no search query
-      matchedRoutes = flatRoutes;
-    } else {
-      // Filter routes based on query
-      matchedRoutes = flatRoutes.filter(route => 
-        (route.label as string).toLowerCase().includes(query.toLowerCase()) ||
-        route.path.toLowerCase().includes(query.toLowerCase()) ||
-        route.filePath.toLowerCase().includes(query.toLowerCase()) ||
-        route.fileType.toLowerCase().includes(query.toLowerCase())
-      );
-    }
+      if (!query || query.trim() === "") {
+        matchedRoutes = flatRoutes;
+      } else {
+        // Filter routes based on query
+        matchedRoutes = flatRoutes.filter(route => 
+          (route.label as string).toLowerCase().includes(query.toLowerCase()) ||
+          route.path.toLowerCase().includes(query.toLowerCase()) ||
+          route.filePath.toLowerCase().includes(query.toLowerCase()) ||
+          route.fileType.toLowerCase().includes(query.toLowerCase())
+        );
+      }
 
     // Group by file type
     const categories: SearchResult['categories'] = {};
@@ -448,7 +455,7 @@ document.addEventListener('click', (e) => {
       `;
     }
 
-    if (this.currentResults.totalResults === 0) {
+  if (this.currentResults.totalResults === 0 && this.initialScanCompleted) {
       if (this.currentResults.query) {
         return `
           <div class="no-results">
