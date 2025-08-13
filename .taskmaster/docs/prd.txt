@@ -1,0 +1,112 @@
+<context>
+# Overview
+Next.js Radar is a Visual Studio Code extension that provides visual navigation and routing structure analysis for Next.js App Router projects. It streamlines development by offering an intuitive tree view of routing hierarchies, smart file navigation, and browser integration - similar to the successful Svelte Radar extension but specifically designed for Next.js App Router's unique patterns and conventions.
+
+The extension solves the complexity of navigating large Next.js App Router projects by providing visual route mapping, instant file access, and seamless development workflow integration. It's designed for developers working with Next.js 13+ App Router who need efficient navigation through complex routing structures.
+
+# Core Features
+**Route Tree Visualization**: Displays all Next.js App Router files (page.tsx, layout.tsx, loading.tsx, error.tsx, route.ts, etc.) in both hierarchical and flat view modes with appropriate icons and categorization.
+
+**Smart Pattern Recognition**: Automatically detects and correctly displays Next.js App Router conventions including dynamic segments ([id]), catch-all routes ([...slug]), optional catch-all ([[...slug]]), route groups ((marketing)), parallel routes (@auth), and intercepting routes ((..), (...), (...)).
+
+**Search and Navigation**: Real-time search functionality across routes, file paths, and file types with maintaining focus during typing. Quick file opening and browser preview integration.
+
+**Page Content Analysis**: Analyzes React components to show internal structure, exports, and navigation points within TypeScript/JavaScript files.
+
+**Browser Integration**: Direct browser opening of routes with configurable port settings and URL generation for development servers.
+
+# User Experience
+**Primary User**: Next.js developers working with App Router projects (Next.js 13+)
+**Secondary Users**: Team leads reviewing project structure, new developers onboarding to projects
+
+**Key User Flows**:
+1. Extension auto-activates on Next.js project detection
+2. Route tree populates in sidebar with categorized file types
+3. Users search/browse routes and instantly open files or browser previews
+4. Page content view updates based on currently active file
+5. Context menus provide quick actions (copy path, open browser, etc.)
+
+**UI/UX Considerations**:
+- Clean, VS Code-native interface with consistent iconography
+- Responsive search with debounced input and focus retention
+- Hierarchical categorization (PAGES, LAYOUTS, API ROUTES, etc.)
+- Hover actions for quick access without context switching
+</context>
+
+<PRD>
+# Technical Architecture
+**Extension Structure**: TypeScript-based VS Code extension using TreeDataProvider pattern for tree views and WebviewViewProvider for search interface.
+
+**Core Components**:
+- RouteItem model for tree node representation
+- RoutesProvider for file system scanning and tree data management
+- SearchViewProvider for webview-based search interface with focus retention
+- PageContentProvider for component structure analysis
+- Utility modules for route pattern matching, file operations, and URL handling
+
+**File Detection System**: Glob-based file system monitoring for Next.js App Router patterns with real-time updates on file changes.
+
+**Configuration Management**: JSON-based settings for view preferences, port configuration, and project-specific overrides (.vscode/nextjs-radar.json).
+
+**Browser Integration**: Development server integration with configurable ports and URL generation for route preview.
+
+# Development Roadmap
+**Phase 1: Core Infrastructure**
+- Extension scaffolding and activation logic
+- Basic file detection for standard App Router files
+- Simple tree view implementation with basic navigation
+- Route pattern recognition for static and dynamic routes
+
+**Phase 2: Enhanced Navigation**
+- Search interface with real-time filtering and focus retention
+- Hierarchical and flat view modes with categorization
+- Context menu actions and keyboard shortcuts
+- Browser integration for route preview
+
+**Phase 3: Advanced Features**
+- Page content analysis for component structure
+- Support for complex routing patterns (parallel, intercepting routes)
+- URL-based route opening functionality
+- Configuration system for project customization
+
+**Phase 4: Polish and Optimization**
+- Performance optimization for large projects
+- Comprehensive test coverage
+- Documentation and marketplace preparation
+- User experience refinements
+
+# Logical Dependency Chain
+**Foundation First**: Extension activation, basic file scanning, and tree view setup must be completed before any navigation features.
+
+**Quick Visibility**: Early implementation of basic route tree display to provide immediate value and visual feedback.
+
+**Incremental Enhancement**: Each routing pattern type (dynamic, catch-all, etc.) can be added incrementally without breaking existing functionality.
+
+**Search Layer**: Search functionality builds on the established tree data structure and can be developed in parallel with advanced routing patterns.
+
+**Integration Features**: Browser preview and page content analysis are additive features that enhance the core navigation experience.
+
+# Risks and Mitigations
+**Technical Challenges**:
+- Complex Next.js routing pattern detection: Mitigate with comprehensive test fixtures and incremental pattern support
+- WebView focus management: Implement message-based updates to maintain input focus during search
+- Large project performance: Use efficient file watching and lazy loading strategies
+
+**MVP Scope**: Focus on basic route tree visualization and file navigation first - this provides immediate value while complex patterns can be added iteratively.
+
+**Resource Constraints**: Leverage proven Svelte Radar architecture and VS Code extension patterns to minimize development risk.
+
+# Appendix
+**Reference Implementation**: Svelte Radar extension provides proven patterns for tree visualization, search functionality, and VS Code integration.
+
+**Technical Specifications**:
+- Target VS Code 1.60.0+
+- Node.js 16+ compatibility
+- TypeScript with strict type checking
+- ESBuild for efficient bundling
+- Mocha test framework with VS Code extension testing
+
+**File Type Support**: page.tsx/js, layout.tsx/js, loading.tsx/js, error.tsx/js, not-found.tsx/js, route.ts/js, template.tsx/js, default.tsx/js, global-error.tsx/js
+
+**Routing Pattern Coverage**: Static routes, dynamic segments [id], catch-all [...slug], optional catch-all [[...slug]], route groups (marketing), parallel routes @auth, intercepting routes (..), (...), (....)
+</PRD>
