@@ -203,6 +203,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show categorized groups (PAGES, LAYOUTS, API ROUTES, etc.) at root"
+        },
+        "nextjsRadar.hostUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Base URL for opening routes in browser. Include protocol and port (e.g., http://localhost:3000, https://myapp.dev:8080)"
         }
       }
     }

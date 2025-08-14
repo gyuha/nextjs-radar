@@ -114,8 +114,9 @@ function registerCommands(
 	// Open route in browser command
 	const openInBrowserCommand = vscode.commands.registerCommand('nextjsRadar.openInBrowser', async (routeItem) => {
 		if (routeItem && routeItem.path) {
-			// Use fixed localhost URL (configuration removed due to complexity)
-			const baseUrl = 'http://localhost:3000';
+			const config = routesProvider.getConfiguration();
+			// Use configurable host URL or fall back to localhost with port
+			const baseUrl = config.hostUrl || `http://localhost:${config.port}`;
 			const url = `${baseUrl}${routeItem.path}`;
 			await vscode.env.openExternal(vscode.Uri.parse(url));
 		}
@@ -166,13 +167,14 @@ function registerCommands(
 		const vsCodeConfig = vscode.workspace.getConfiguration('nextjsRadar');
 		
 		vscode.window.showInformationMessage(
-			`Config Test: viewType="${config.viewType}" port="${config.port}" (VS Code working: ${!!vsCodeConfig})`
+			`Config Test: hostUrl="${config.hostUrl}" port="${config.port}" (VS Code: "${vsCodeConfig.get('hostUrl')}")`
 		);
 		console.log('Next.js Radar: Config test:', {
-			configViewType: config.viewType,
+			configHostUrl: config.hostUrl,
 			configPort: config.port,
-			vsCodeConfig: vsCodeConfig,
-			vsCodeViewType: vsCodeConfig.get('viewType')
+			vsCodeHostUrl: vsCodeConfig.get('hostUrl'),
+			vsCodeViewType: vsCodeConfig.get('viewType'),
+			vsCodeAll: vsCodeConfig
 		});
 	});
 

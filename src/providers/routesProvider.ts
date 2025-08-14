@@ -26,6 +26,7 @@ export interface NextjsRadarConfig extends NextJsRouteConfig {
   showFileExtensions?: boolean;
   groupByType?: boolean;
   categorizeRoot?: boolean; // NEW: group routes into categories at root
+  hostUrl?: string; // NEW: configurable host URL for opening in browser
 }
 
 export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -60,7 +61,8 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
       sortingType: 'natural',
       showFileExtensions: false,
       groupByType: true,
-      categorizeRoot: true
+      categorizeRoot: true,
+      hostUrl: 'http://localhost:3000'
     };
   }
 
@@ -94,6 +96,9 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
 
     // Set up file watcher
     this.setupFileWatcher();
+
+    // Set up configuration change listener
+    this.setupConfigurationChangeListener();
   }
 
   /**
@@ -123,6 +128,14 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
         this.config.showFileExtensions = workspaceConfig.get('showFileExtensions', this.config.showFileExtensions);
         this.config.groupByType = workspaceConfig.get('groupByType', this.config.groupByType);
         this.config.categorizeRoot = workspaceConfig.get('categorizeRoot', this.config.categorizeRoot);
+        this.config.hostUrl = workspaceConfig.get('hostUrl', this.config.hostUrl);
+        
+        // Debug: Log loaded configuration
+        console.log('Next.js Radar: Configuration loaded:', {
+          hostUrl: this.config.hostUrl,
+          viewType: this.config.viewType,
+          port: this.config.port
+        });
       }
     } catch (error) {
       console.error('Failed to load configuration:', error);
@@ -147,6 +160,23 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
 
     // Register for cleanup
     this.context.subscriptions.push(this.fileWatcher);
+  }
+
+  /**
+   * Set up configuration change listener
+   */
+  private setupConfigurationChangeListener(): void {
+    const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
+      if (event.affectsConfiguration('nextjsRadar')) {
+        // Reload configuration when Next.js Radar settings change
+        this.loadConfiguration().then(() => {
+          console.log('Next.js Radar: Configuration reloaded due to settings change');
+        });
+      }
+    });
+
+    // Register for cleanup
+    this.context.subscriptions.push(configChangeListener);
   }
 
   /**
