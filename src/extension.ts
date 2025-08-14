@@ -29,8 +29,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Initialize providers
 		routesProvider = new NextjsRoutesProvider(context);
 		pageContentProvider = new PageContentProvider(context);
-		searchViewProvider = new NextjsSearchViewProvider(routesProvider);
 		routeParametersProvider = new RouteParametersProvider(context);
+		searchViewProvider = new NextjsSearchViewProvider(routesProvider, routeParametersProvider);
 
 		// Register tree views
 		const routesTreeView = vscode.window.createTreeView('nextjsRadar.routes', {

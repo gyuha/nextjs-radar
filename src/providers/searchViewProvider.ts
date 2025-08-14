@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { NextjsRoutesProvider } from './routesProvider';
 import { RouteItem } from '../models';
 import { RouteFileType } from '../constants';
+import { RouteParametersProvider } from './routeParametersProvider';
 
 interface SearchResult {
   query: string;
@@ -24,7 +25,7 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
   private currentResults: SearchResult | null = null;
   private initialScanCompleted = false; // 스캔 완료 여부 플래그
 
-  constructor(private routesProvider: NextjsRoutesProvider) {
+  constructor(private routesProvider: NextjsRoutesProvider, private routeParametersProvider?: RouteParametersProvider) {
     // 라우트 변경(초기 스캔 포함) 시 검색 갱신
     this.routesProvider.onDidChangeTreeData(() => {
       this.initialScanCompleted = true;
@@ -133,7 +134,26 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
   private async openInBrowser(routePath: string): Promise<void> {
     try {
       const config = this.routesProvider.getConfiguration();
-      const url = `http://localhost:${config.port}${routePath}`;
+      
+      // Replace route parameters if available
+      let finalPath = routePath;
+      if (this.routeParametersProvider) {
+        finalPath = this.routeParametersProvider.replaceParametersInPath(routePath);
+        
+        // Check for missing parameters
+        const missingParams = this.routeParametersProvider.getMissingParametersForPath(routePath);
+        if (missingParams.length > 0) {
+          const proceed = await vscode.window.showWarningMessage(
+            `Missing parameters for route: ${missingParams.join(', ')}. Open anyway?`,
+            'Yes', 'No'
+          );
+          if (proceed !== 'Yes') {
+            return;
+          }
+        }
+      }
+      
+      const url = `http://localhost:${config.port}${finalPath}`;
       await vscode.env.openExternal(vscode.Uri.parse(url));
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to open in browser: ${error}`);

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { replaceRouteParameters, getMissingParameters } from '../utils/parameterUtils';
 
 interface RouteParameter {
   id: string;
@@ -88,6 +89,7 @@ export class RouteParametersProvider implements vscode.WebviewViewProvider {
       this.saveParameters();
     }
   }
+
 
   private updateView(): void {
     if (this._view) {
@@ -470,6 +472,19 @@ updateParametersDisplay(${JSON.stringify(this.parameters)}, ${this.isExpanded});
         </tbody>
       </table>
     `;
+  }
+
+  // Public methods to get parameters for external use
+  public getParameters(): RouteParameter[] {
+    return [...this.parameters];
+  }
+
+  public replaceParametersInPath(routePath: string): string {
+    return replaceRouteParameters(routePath, this.parameters);
+  }
+
+  public getMissingParametersForPath(routePath: string): string[] {
+    return getMissingParameters(routePath, this.parameters);
   }
 
   dispose() {
