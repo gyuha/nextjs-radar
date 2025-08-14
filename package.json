@@ -142,6 +142,13 @@
           "icon": "$(symbol-structure)",
           "contextualTitle": "Page Content",
           "when": "resourceExtname == .tsx || resourceExtname == .jsx || resourceExtname == .ts || resourceExtname == .js"
+        },
+        {
+          "id": "nextjsRadar.routeParameters",
+          "name": "Route Parameters",
+          "icon": "$(settings-gear)",
+          "contextualTitle": "Route Parameters",
+          "type": "webview"
         }
       ]
     },

@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import { NextjsRoutesProvider, PageContentProvider, NextjsSearchViewProvider } from './providers';
+import { RouteParametersProvider } from './providers/routeParametersProvider';
 import { getWorkspaceRoot, isNextjsProject } from './utils';
 
 let routesProvider: NextjsRoutesProvider | undefined;
 let pageContentProvider: PageContentProvider | undefined;
 let searchViewProvider: NextjsSearchViewProvider | undefined;
+let routeParametersProvider: RouteParametersProvider | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
 	console.log('Next.js Radar extension is starting...');
@@ -27,7 +29,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		// Initialize providers
 		routesProvider = new NextjsRoutesProvider(context);
 		pageContentProvider = new PageContentProvider(context);
-		searchViewProvider = new NextjsSearchViewProvider(routesProvider, context);
+		searchViewProvider = new NextjsSearchViewProvider(routesProvider);
+		routeParametersProvider = new RouteParametersProvider(context);
 
 		// Register tree views
 		const routesTreeView = vscode.window.createTreeView('nextjsRadar.routes', {
@@ -46,6 +49,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			searchViewProvider
 		);
 
+		const routeParametersWebviewView = vscode.window.registerWebviewViewProvider(
+			RouteParametersProvider.viewId,
+			routeParametersProvider
+		);
+
 		// Register commands
 		registerCommands(context, routesProvider, pageContentProvider);
 
@@ -54,9 +62,11 @@ export async function activate(context: vscode.ExtensionContext) {
 			routesTreeView,
 			pageContentTreeView,
 			searchWebviewView,
+			routeParametersWebviewView,
 			routesProvider,
 			pageContentProvider,
-			searchViewProvider
+			searchViewProvider,
+			routeParametersProvider
 		);
 
 		console.log('Next.js Radar successfully activated!');
@@ -170,4 +180,5 @@ export function deactivate() {
 	routesProvider = undefined;
 	pageContentProvider = undefined;
 	searchViewProvider = undefined;
+	routeParametersProvider = undefined;
 }
