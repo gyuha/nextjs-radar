@@ -16,12 +16,19 @@ interface SearchResult {
   };
 }
 
+interface RouteParameter {
+  id: string;
+  key: string;
+  value: string;
+}
+
 export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = 'nextjsRadar.search';
   private _view?: vscode.WebviewView;
   private disposables: vscode.Disposable[] = [];
   private currentResults: SearchResult | null = null;
   private initialScanCompleted = false; // 스캔 완료 여부 플래그
+  private parameters: RouteParameter[] = [];
 
   constructor(private routesProvider: NextjsRoutesProvider, private context: vscode.ExtensionContext) {
     // 라우트 변경(초기 스캔 포함) 시 검색 갱신
@@ -30,6 +37,9 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
       // 기존 쿼리를 유지하여 재검색 (없으면 전체 목록)
       this.performSearch(this.currentResults?.query || '');
     });
+    
+    // 저장된 파라미터 로드
+    this.loadParameters();
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void | Thenable<void> {
@@ -60,6 +70,15 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'open-browser':
           this.openInBrowser(msg.path);
+          break;
+        case 'add-parameter':
+          this.addParameter();
+          break;
+        case 'delete-parameter':
+          this.deleteParameter(msg.id);
+          break;
+        case 'update-parameter':
+          this.updateParameter(msg.id, msg.key, msg.value);
           break;
       }
     }, undefined, this.disposables);
@@ -169,10 +188,11 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
 
   private updateView(): void {
     if (this._view) {
-      // 검색 결과만 업데이트하고 전체 HTML을 다시 생성하지 않음
+      // 검색 결과와 파라미터 정보 업데이트
       this._view.webview.postMessage({
         type: 'updateResults',
-        results: this.currentResults
+        results: this.currentResults,
+        parameters: this.parameters
       });
     }
   }
@@ -375,6 +395,105 @@ body {
   color: var(--vscode-descriptionForeground);
   font-size: 12px;
 }
+
+.parameters-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--vscode-panel-border);
+  padding-top: 12px;
+}
+
+.parameters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.parameters-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.add-parameter-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-button-border);
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.add-parameter-btn:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.parameters-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parameters-table th,
+.parameters-table td {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 12px;
+  border-bottom: 1px solid var(--vscode-widget-border);
+}
+
+.parameters-table th {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground);
+  font-weight: 600;
+}
+
+.parameter-input {
+  width: 100%;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 2px;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+
+.parameter-input:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.delete-parameter-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid var(--vscode-errorForeground);
+  background: transparent;
+  color: var(--vscode-errorForeground);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-parameter-btn:hover {
+  background: var(--vscode-errorForeground);
+  color: var(--vscode-errorBackground);
+}
+
+.parameters-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  font-style: italic;
+}
 </style>
 </head>
 <body>
@@ -392,6 +511,14 @@ body {
   </div>
 
   <div id="results-container">${this.getResultsHtml()}</div>
+
+  <div class="parameters-section">
+    <div class="parameters-header">
+      <h3>Route Parameters</h3>
+      <button id="add-parameter" class="add-parameter-btn" title="Add Parameter">+</button>
+    </div>
+    <div id="parameters-container">${this.getParametersHtml()}</div>
+  </div>
 
 <script nonce="${nonce}">
 const vscode = acquireVsCodeApi();
@@ -412,6 +539,7 @@ window.addEventListener('message', event => {
   const message = event.data;
   if (message.type === 'updateResults') {
     updateResultsDisplay(message.results);
+    updateParametersDisplay(message.parameters || []);
   }
 });
 
@@ -420,6 +548,13 @@ function updateResultsDisplay(results) {
   if (!resultsContainer) return;
   
   resultsContainer.innerHTML = getResultsHtml(results);
+}
+
+function updateParametersDisplay(parameters) {
+  const parametersContainer = document.getElementById('parameters-container');
+  if (!parametersContainer) return;
+  
+  parametersContainer.innerHTML = getParametersHtml(parameters);
 }
 
 function getResultsHtml(currentResults) {
@@ -521,12 +656,102 @@ function canOpenInBrowser(fileType) {
   return fileType === 'page' || fileType === 'route';
 }
 
+function getParametersHtml(parameters) {
+  if (!parameters || parameters.length === 0) {
+    return \`
+      <div class="parameters-empty">
+        No route parameters defined.<br>
+        Click + to add your first parameter.
+      </div>
+    \`;
+  }
+
+  const parametersRows = parameters.map(param => \`
+    <tr>
+      <td>
+        <input 
+          type="text" 
+          class="parameter-input" 
+          value="\${param.key}" 
+          data-param-id="\${param.id}" 
+          data-field="key"
+          placeholder="Parameter key"
+        />
+      </td>
+      <td>
+        <input 
+          type="text" 
+          class="parameter-input" 
+          value="\${param.value}" 
+          data-param-id="\${param.id}" 
+          data-field="value"
+          placeholder="Parameter value"
+        />
+      </td>
+      <td>
+        <button 
+          class="delete-parameter-btn" 
+          data-param-id="\${param.id}" 
+          title="Delete Parameter"
+        >×</button>
+      </td>
+    </tr>
+  \`).join('');
+
+  return \`
+    <table class="parameters-table">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Value</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        \${parametersRows}
+      </tbody>
+    </table>
+  \`;
+}
+
 clearBtn.addEventListener('click', () => {
   searchInput.value = '';
   vscode.postMessage({ type: 'clear' });
 });
 
+// Add parameter button event listener
+document.getElementById('add-parameter').addEventListener('click', () => {
+  vscode.postMessage({ type: 'add-parameter' });
+});
+
+// Parameter input event listeners
+document.addEventListener('input', (e) => {
+  if (e.target.classList.contains('parameter-input')) {
+    const paramId = e.target.dataset.paramId;
+    const field = e.target.dataset.field;
+    const value = e.target.value;
+    
+    // Get the current parameters from the DOM
+    const keyInput = document.querySelector(\`input[data-param-id="\${paramId}"][data-field="key"]\`);
+    const valueInput = document.querySelector(\`input[data-param-id="\${paramId}"][data-field="value"]\`);
+    
+    vscode.postMessage({ 
+      type: 'update-parameter', 
+      id: paramId, 
+      key: keyInput.value, 
+      value: valueInput.value 
+    });
+  }
+});
+
 document.addEventListener('click', (e) => {
+  // Handle parameter deletion
+  if (e.target.classList.contains('delete-parameter-btn')) {
+    const paramId = e.target.dataset.paramId;
+    vscode.postMessage({ type: 'delete-parameter', id: paramId });
+    return;
+  }
+  
   // Handle category toggle
   if (e.target.classList.contains('category-header') || e.target.closest('.category-header')) {
     const header = e.target.classList.contains('category-header') ? e.target : e.target.closest('.category-header');
@@ -663,6 +888,99 @@ document.addEventListener('click', (e) => {
     return fileType === RouteFileType.Page || fileType === RouteFileType.Route;
   }
 
+  private getParametersHtml(): string {
+    if (this.parameters.length === 0) {
+      return `
+        <div class="parameters-empty">
+          No route parameters defined.<br>
+          Click + to add your first parameter.
+        </div>
+      `;
+    }
+
+    const parametersRows = this.parameters.map(param => `
+      <tr>
+        <td>
+          <input 
+            type="text" 
+            class="parameter-input" 
+            value="${param.key}" 
+            data-param-id="${param.id}" 
+            data-field="key"
+            placeholder="Parameter key"
+          />
+        </td>
+        <td>
+          <input 
+            type="text" 
+            class="parameter-input" 
+            value="${param.value}" 
+            data-param-id="${param.id}" 
+            data-field="value"
+            placeholder="Parameter value"
+          />
+        </td>
+        <td>
+          <button 
+            class="delete-parameter-btn" 
+            data-param-id="${param.id}" 
+            title="Delete Parameter"
+          >×</button>
+        </td>
+      </tr>
+    `).join('');
+
+    return `
+      <table class="parameters-table">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Value</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${parametersRows}
+        </tbody>
+      </table>
+    `;
+  }
+
+  private loadParameters(): void {
+    const savedParams = this.context.globalState.get<RouteParameter[]>('nextjsRadar.routeParameters', []);
+    this.parameters = savedParams;
+  }
+
+  private saveParameters(): void {
+    this.context.globalState.update('nextjsRadar.routeParameters', this.parameters);
+  }
+
+  private addParameter(): void {
+    const newId = Date.now().toString();
+    const newParam: RouteParameter = {
+      id: newId,
+      key: '',
+      value: ''
+    };
+    this.parameters.push(newParam);
+    this.saveParameters();
+    this.updateView();
+  }
+
+  private deleteParameter(id: string): void {
+    this.parameters = this.parameters.filter(param => param.id !== id);
+    this.saveParameters();
+    this.updateView();
+  }
+
+  private updateParameter(id: string, key: string, value: string): void {
+    const param = this.parameters.find(p => p.id === id);
+    if (param) {
+      param.key = key;
+      param.value = value;
+      this.saveParameters();
+    }
+  }
 
   dispose() {
     this.disposables.forEach(d => d.dispose());
