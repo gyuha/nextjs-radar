@@ -133,8 +133,6 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
 
   private async openInBrowser(routePath: string): Promise<void> {
     try {
-      const config = this.routesProvider.getConfiguration();
-      
       // Replace route parameters if available
       let finalPath = routePath;
       if (this.routeParametersProvider) {
@@ -153,8 +151,8 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
         }
       }
       
-      // Use configurable host URL or fall back to localhost with port
-      const baseUrl = config.hostUrl || `http://localhost:${config.port}`;
+      // Use fixed localhost URL (configuration removed due to complexity)
+      const baseUrl = 'http://localhost:3000';
       const url = `${baseUrl}${finalPath}`;
       await vscode.env.openExternal(vscode.Uri.parse(url));
     } catch (error) {
