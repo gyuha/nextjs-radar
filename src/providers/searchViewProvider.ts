@@ -153,7 +153,9 @@ export class NextjsSearchViewProvider implements vscode.WebviewViewProvider {
         }
       }
       
-      const url = `http://localhost:${config.port}${finalPath}`;
+      // Use configurable host URL or fall back to localhost with port
+      const baseUrl = config.hostUrl || `http://localhost:${config.port}`;
+      const url = `${baseUrl}${finalPath}`;
       await vscode.env.openExternal(vscode.Uri.parse(url));
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to open in browser: ${error}`);

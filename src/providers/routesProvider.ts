@@ -26,6 +26,7 @@ export interface NextjsRadarConfig extends NextJsRouteConfig {
   showFileExtensions?: boolean;
   groupByType?: boolean;
   categorizeRoot?: boolean; // NEW: group routes into categories at root
+  hostUrl?: string; // NEW: configurable host URL for opening in browser
 }
 
 export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -60,7 +61,8 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
       sortingType: 'natural',
       showFileExtensions: false,
       groupByType: true,
-      categorizeRoot: true
+      categorizeRoot: true,
+      hostUrl: 'http://localhost:3000'
     };
   }
 
@@ -121,6 +123,7 @@ export class NextjsRoutesProvider implements vscode.TreeDataProvider<vscode.Tree
         this.config.sortingType = workspaceConfig.get('sortingType', this.config.sortingType);
         this.config.showFileExtensions = workspaceConfig.get('showFileExtensions', this.config.showFileExtensions);
         this.config.groupByType = workspaceConfig.get('groupByType', this.config.groupByType);
+        this.config.hostUrl = workspaceConfig.get('hostUrl', this.config.hostUrl);
       }
     } catch (error) {
       console.error('Failed to load configuration:', error);

@@ -115,7 +115,9 @@ function registerCommands(
 	const openInBrowserCommand = vscode.commands.registerCommand('nextjsRadar.openInBrowser', async (routeItem) => {
 		if (routeItem && routeItem.path) {
 			const config = routesProvider.getConfiguration();
-			const url = `http://localhost:${config.port}${routeItem.path}`;
+			// Use configurable host URL or fall back to localhost with port
+			const baseUrl = config.hostUrl || `http://localhost:${config.port}`;
+			const url = `${baseUrl}${routeItem.path}`;
 			await vscode.env.openExternal(vscode.Uri.parse(url));
 		}
 	});
